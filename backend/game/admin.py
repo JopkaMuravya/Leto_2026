@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import User, Level, GameResult
 
-# Register your models here.
+admin.site.register(User)
+admin.site.register(Level)
+admin.site.register(GameResult)
