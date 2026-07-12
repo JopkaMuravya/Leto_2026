@@ -66,11 +66,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const leftDrawer = ref(false)
+
+onMounted(() => {
+  auth.init()
+})
 </script>
 
 <style>

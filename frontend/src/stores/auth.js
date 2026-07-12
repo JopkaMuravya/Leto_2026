@@ -10,6 +10,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!accessToken.value)
 
+  async function init() {
+    if (accessToken.value) {
+      try {
+        await fetchUser()
+      } catch {
+        logout()
+      }
+    }
+  }
+
   async function login(email, password) {
     const { data } = await authApi.login(email, password)
     localStorage.setItem('accessToken', data.access)
@@ -37,5 +47,5 @@ export const useAuthStore = defineStore('auth', () => {
     router.push('/login')
   }
 
-  return { user, accessToken, isAuthenticated, login, register, fetchUser, logout }
+  return { user, accessToken, isAuthenticated, login, register, fetchUser, logout, init }
 })
