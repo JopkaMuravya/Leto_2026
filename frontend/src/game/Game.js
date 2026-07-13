@@ -60,13 +60,15 @@ export class Game {
 
   loop() {
     if (this.state !== 'playing') {
-      const time = Math.round((Date.now() - this.startTime) / 1000)
-      this.onEnd({
-        score: this.score,
-        won: this.state === 'won',
-        livesLeft: this.lives,
-        time: time,
-      })
+      if (this.state !== 'destroyed') {
+        const time = Math.round((Date.now() - this.startTime) / 1000)
+        this.onEnd({
+          score: this.score,
+          won: this.state === 'won',
+          livesLeft: this.lives,
+          time: time,
+        })
+      }
       return
     }
 
@@ -76,7 +78,6 @@ export class Game {
   }
 
   update() {
-    // Управление
     this.player.vx = 0
     if (this.keys['ArrowLeft'] || this.keys['a']) this.player.vx = -this.player.speed
     if (this.keys['ArrowRight'] || this.keys['d']) this.player.vx = this.player.speed
@@ -87,7 +88,6 @@ export class Game {
     this.coins.forEach(c => c.update())
     this.finish.update()
 
-    // Монеты
     for (const coin of this.coins) {
       if (!coin.collected && this.player.collidesWith(coin)) {
         coin.collected = true
@@ -96,7 +96,6 @@ export class Game {
       }
     }
 
-    // Враги
     for (const enemy of this.enemies) {
       if (this.player.collidesWith(enemy) && this.player.takeDamage()) {
         this.lives--
@@ -107,12 +106,10 @@ export class Game {
       }
     }
 
-    // Финиш
     if (this.player.collidesWith(this.finish)) {
       this.state = 'won'
     }
 
-    // Падение
     if (this.player.y > this.canvasHeight + 50) {
       this.lives = 0
       this.onLivesUpdate(0)
@@ -124,7 +121,6 @@ export class Game {
     const ctx = this.ctx
     const cameraX = Math.max(0, this.player.x - this.canvasWidth / 3)
 
-    // Фон
     const gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight)
     gradient.addColorStop(0, '#1a0a2e')
     gradient.addColorStop(0.5, '#2d1b3d')
@@ -132,7 +128,6 @@ export class Game {
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
 
-    // Дальний фон (горы)
     ctx.fillStyle = '#1a1025'
     for (let i = 0; i < 5; i++) {
       const mx = (i * 300 - cameraX * 0.3) % 1500
@@ -143,7 +138,6 @@ export class Game {
       ctx.fill()
     }
 
-    // Звёзды
     ctx.fillStyle = '#fff'
     for (let i = 0; i < 30; i++) {
       const sx = (i * 137 + 50) % this.canvasWidth
@@ -151,7 +145,6 @@ export class Game {
       ctx.fillRect(sx, sy, 2, 2)
     }
 
-    // Объекты
     this.platforms.forEach(p => p.draw(ctx, cameraX))
     this.coins.forEach(c => c.draw(ctx, cameraX))
     this.enemies.forEach(e => e.draw(ctx, cameraX))
@@ -160,7 +153,11 @@ export class Game {
   }
 
   destroy() {
-    cancelAnimationFrame(this.animFrameId)
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId)
+      this.animFrameId = null
+    }
     this.unbindInput()
+    this.state = 'destroyed'
   }
 }

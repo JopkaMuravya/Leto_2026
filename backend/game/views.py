@@ -1,7 +1,7 @@
 from rest_framework import viewsets, generics, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum, Count, Q
+from django.db import connection
 from django.contrib.auth import get_user_model
 from .models import Level, GameResult
 from .serializers import (
@@ -54,14 +54,29 @@ class GameResultViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def leaderboard(self, request):
-        leaderboard = (
-            GameResult.objects
-            .values('user__username')
-            .annotate(
-                total_score=Sum('score'),
-                levels_won=Count('id', filter=Q(won=True))
-            )
-            .order_by('-total_score', '-levels_won')[:100]
-        )
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    u.username,
+                    COALESCE(SUM(best_scores.best), 0) AS total_score,
+                    COUNT(best_scores.level_id) AS levels_won
+                FROM game_user u
+                LEFT JOIN (
+                    SELECT user_id, level_id, MAX(score) AS best
+                    FROM game_gameresult
+                    WHERE won = TRUE
+                    GROUP BY user_id, level_id
+                ) best_scores ON u.id = best_scores.user_id
+                GROUP BY u.id, u.username
+                ORDER BY total_score DESC, levels_won DESC
+                LIMIT 100
+            """)
+            rows = cursor.fetchall()
+
+        leaderboard = [
+            {'username': row[0], 'total_score': row[1], 'levels_won': row[2]}
+            for row in rows
+        ]
+
         serializer = LeaderboardSerializer(leaderboard, many=True)
         return Response(serializer.data)

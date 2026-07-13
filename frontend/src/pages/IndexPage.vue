@@ -16,19 +16,28 @@
 
     <q-card class="home-card q-mb-xl">
       <q-card-section>
-        <div class="text-h6 text-amber q-mb-sm">🎮 Управление</div>
-        <div class="row q-col-gutter-md text-grey-4">
-          <div class="col-4 text-center">
-            <div class="key-icon">← →</div>
-            <div class="q-mt-sm">Движение</div>
+        <div class="text-h6 text-amber q-mb-md text-center">🎮 Управление</div>
+
+        <div class="controls">
+          <div class="control-block">
+            <div class="key-label">Движение и прыжок</div>
+            <div class="key-row">
+              <div class="key-icon">←</div>
+              <div class="key-icon">↑</div>
+              <div class="key-icon">→</div>
+            </div>
+            <div class="key-row q-mt-sm">
+              <div class="key-icon small">A</div>
+              <div class="key-icon small">W</div>
+              <div class="key-icon small">D</div>
+            </div>
           </div>
-          <div class="col-4 text-center">
-            <div class="key-icon">↑</div>
-            <div class="q-mt-sm">Прыжок</div>
-          </div>
-          <div class="col-4 text-center">
-            <div class="key-icon">SPACE</div>
-            <div class="q-mt-sm">Прыжок</div>
+
+          <div class="control-block">
+            <div class="key-label">Прыжок</div>
+            <div class="key-row">
+              <div class="key-icon wide">SPACE</div>
+            </div>
           </div>
         </div>
       </q-card-section>
@@ -89,15 +98,54 @@ const auth = useAuthStore()
   width: 100%;
 }
 
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.control-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.key-label {
+  color: #999;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.key-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
 .key-icon {
-  background: rgba(255, 215, 0, 0.1);
+  background: rgba(255, 215, 0, 0.08);
   border: 2px solid #ffd700;
   border-radius: 8px;
-  padding: 8px;
+  padding: 10px 14px;
   font-size: 1.2em;
   font-weight: bold;
   color: #ffd700;
-  font-family: 'Courier New', monospace;
+  font-family: 'Georgia', serif;
+  min-width: 44px;
+  text-align: center;
+}
+
+.key-icon.small {
+  padding: 6px 10px;
+  font-size: 0.9em;
+  min-width: 32px;
+}
+
+.key-icon.wide {
+  padding: 10px 24px;
+  font-size: 1em;
+  letter-spacing: 2px;
 }
 
 .home-btn {

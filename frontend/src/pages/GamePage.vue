@@ -10,14 +10,22 @@
     <q-dialog v-model="showDialog" persistent>
       <q-card class="result-card">
         <q-card-section class="text-center">
-          <div class="text-h3 q-mb-md">{{ result?.won ? '🎉 ПОБЕДА!' : '💀 ПОРАЖЕНИЕ' }}</div>
+          <div :class="['text-h3 q-mb-md', result?.won ? 'text-amber' : 'text-red-5']">
+            {{ result?.won ? '🎉 ПОБЕДА!' : '💀 ПОРАЖЕНИЕ' }}
+          </div>
           <div class="text-h5 text-grey-4 q-mb-sm">Очки: {{ result?.score }}</div>
           <div class="text-h5 text-grey-4 q-mb-sm">Время: {{ result?.time }} сек</div>
           <div class="text-h5 text-grey-4 q-mb-lg">Жизней: {{ result?.livesLeft }}</div>
         </q-card-section>
-        <q-card-actions align="center" class="q-pb-md">
-          <q-btn color="amber" text-color="black" label="🔄 ПОВТОРИТЬ" @click="restartGame" class="q-mr-md" />
-          <q-btn color="grey-7" label="🗺️ К УРОВНЯМ" @click="$router.push('/levels')" />
+        <q-card-actions align="center" class="q-pb-md q-gutter-md">
+          <q-btn color="amber" text-color="black" label="🔄 ПОВТОРИТЬ" @click="restartGame" />
+          <q-btn
+            v-if="result?.won && nextLevelId"
+            color="green"
+            label="▶️ СЛЕДУЮЩИЙ"
+            @click="goToNextLevel"
+          />
+          <q-btn color="grey-7" label="🗺️ К УРОВНЯМ" @click="goToLevels" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -25,37 +33,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Game } from '../game/Game.js'
 import { levelsApi } from '../api/levels.js'
 import { resultsApi } from '../api/results.js'
 
 const route = useRoute()
+const router = useRouter()
 const canvasRef = ref(null)
 const score = ref(0)
 const lives = ref(3)
 const showDialog = ref(false)
 const result = ref(null)
+const nextLevelId = ref(null)
 let game = null
 let levelData = null
 
-onMounted(async () => {
+async function initLevel() {
   try {
     const response = await levelsApi.getById(route.params.id)
     levelData = response.data.data
+    await loadNextLevel()
     startNewGame()
   } catch (error) {
     console.error('Failed to load level:', error)
   }
+}
+
+onMounted(() => {
+  initLevel()
+})
+
+watch(() => route.params.id, () => {
+  initLevel()
 })
 
 onUnmounted(() => {
-  game?.destroy()
+  destroyGame()
 })
 
+function destroyGame() {
+  if (game) {
+    game.destroy()
+    game = null
+  }
+}
+
 function startNewGame() {
-  game?.destroy()
+  destroyGame()
   score.value = 0
   lives.value = 3
 
@@ -67,6 +93,21 @@ function startNewGame() {
     (l) => { lives.value = l }
   )
   game.start()
+}
+
+async function loadNextLevel() {
+  try {
+    const allLevels = await levelsApi.getAll()
+    const levels = allLevels.data.results || allLevels.data
+    const currentIndex = levels.findIndex(l => l.id === route.params.id)
+    if (currentIndex < levels.length - 1) {
+      nextLevelId.value = levels[currentIndex + 1].id
+    } else {
+      nextLevelId.value = null
+    }
+  } catch {
+    nextLevelId.value = null
+  }
 }
 
 async function onGameEnd(gameResult) {
@@ -89,6 +130,18 @@ async function onGameEnd(gameResult) {
 function restartGame() {
   showDialog.value = false
   startNewGame()
+}
+
+function goToNextLevel() {
+  showDialog.value = false
+  destroyGame()
+  router.push(`/game/${nextLevelId.value}`)
+}
+
+function goToLevels() {
+  showDialog.value = false
+  destroyGame()
+  router.push('/levels')
 }
 </script>
 
