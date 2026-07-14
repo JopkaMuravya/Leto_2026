@@ -24,21 +24,25 @@ const routes = [
         path: 'levels',
         name: 'levels',
         component: () => import('../pages/LevelsPage.vue'),
+        meta: { requiresAuth: true },
       },
       {
         path: 'game/:id',
         name: 'game',
         component: () => import('../pages/GamePage.vue'),
+        meta: { requiresAuth: true },
       },
       {
         path: 'results',
         name: 'results',
         component: () => import('../pages/ResultsPage.vue'),
+        meta: { requiresAuth: true },
       },
       {
         path: 'leaderboard',
         name: 'leaderboard',
         component: () => import('../pages/LeaderboardPage.vue'),
+        meta: { requiresAuth: true },
       },
       {
         path: ':catchAll(.*)*',
@@ -51,6 +55,15 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('accessToken')
+  if (to.meta.requiresAuth && !token) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router
